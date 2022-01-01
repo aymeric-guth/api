@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+
+    db:
+        image: postgres:14.0-alpine@sha256:1cf551de75fd602ebc94ccda93305a4e411f941bf9465f59d850bdcfd474ca52
+        container_name: ${SERVICE_DB}
+        volumes:
+            - /srv/postgres/api:/var/lib/postgresql/data:rw
+            - ./logs/db/:/logs:rw
+            # - ./pgdata:/var/lib/postgresql/data:rw
+        ports:
+            - 192.168.1.200:5432:5432
+        environment:
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    init:
+        image: python_init:${VERSION}
+        container_name: ${SERVICE_INIT}
+        build:
+            context: ./src/init/.
+            network: "host"
+        depends_on:
+            - db
+        environment:
+            DB_USER_GATEWAY: ${DB_USER_GATEWAY}
+            DB_PASSWORD_GATEWAY: ${DB_PASSWORD_GATEWAY}
+            DB_HOST_GATEWAY: ${DB_HOST_GATEWAY}
+            DB_PORT_GATEWAY: ${DB_PORT_GATEWAY}
+            DB_NAME_GATEWAY: ${DB_NAME_GATEWAY}
+            DB_USER_NAS: ${DB_USER_NAS}
+            DB_PASSWORD_NAS: ${DB_PASSWORD_NAS}
+            DB_HOST_NAS: ${DB_HOST_NAS}
+            DB_PORT_NAS: ${DB_PORT_NAS}
+            DB_NAME_NAS: ${DB_NAME_NAS}
+            DB_USER_TR: ${DB_USER_TR}
+            DB_PASSWORD_TR: ${DB_PASSWORD_TR}
+            DB_HOST_TR: ${DB_HOST_TR}
+            DB_PORT_TR: ${DB_PORT_TR}
+            DB_NAME_TR: ${DB_NAME_TR}
+
+    gateway:
+        image: python_gateway:${VERSION}
+        container_name: ${SERVICE_GATEWAY}
+        build:
+            context: ./src/gateway/.
+            # dockerfile: ./src/gateway/Dockerfile
+            network: "host"
+        volumes:
+            - ./src/gateway/src:/src
+            - ./logs/gateway:/logs:rw
+        ports:
+            - 192.168.1.200:8080:8080
+        depends_on:
+            - init
+        environment:
+            DB_USER: ${DB_USER_GATEWAY}
+            DB_PASSWORD: ${DB_PASSWORD_GATEWAY}
+            DB_HOST: ${DB_HOST_GATEWAY}
+            DB_PORT: ${DB_PORT_GATEWAY}
+            DB_NAME: ${DB_NAME_GATEWAY}
+            SECRET_KEY: ${SECRET_KEY}
+            ALGORITHM: ${ALGORITHM}
+            AUTH_HEADER: ${AUTH_HEADER}
+            AUTH_SCHEME: ${AUTH_SCHEME}
+            PROJECT_NAME: ${PROJECT_NAME}
+            MAX_CONNECTIONS_COUNT: ${MAX_CONNECTIONS_COUNT}
+            MIN_CONNECTIONS_COUNT: ${MIN_CONNECTIONS_COUNT}
+            VERSION: ${VERSION}
+            API_PREFIX: ${API_PREFIX_GATEWAY}
+            IP_NAS: ${SERVICE_NAS}
+            PREFIX_NAS: ${API_PREFIX_NAS}
+
+    nas:
+        image: python_nas:${VERSION}
+        container_name: ${SERVICE_NAS}
+        build:
+            context: ./src/nas/.
+            # dockerfile: ./nas/Dockerfile
+            network: "host"
+        volumes:
+            - ./src/nas/src:/src
+            - ./logs/nas:/logs:rw
+            - ${MUSIC}:/shared/Audio:ro
+            - ${VIDEO}:/shared/Video:ro
+        depends_on:
+            - gateway
+        environment:
+            DB_USER: ${DB_USER_NAS}
+            DB_PASSWORD: ${DB_PASSWORD_NAS}
+            DB_HOST: ${DB_HOST_NAS}
+            DB_PORT: ${DB_PORT_NAS}
+            DB_NAME: ${DB_NAME_NAS}
+            SECRET_KEY: ${SECRET_KEY}
+            ALGORITHM: ${ALGORITHM}
+            AUTH_HEADER: ${AUTH_HEADER}
+            AUTH_SCHEME: ${AUTH_SCHEME}
+            PROJECT_NAME: ${PROJECT_NAME}
+            MAX_CONNECTIONS_COUNT: ${MAX_CONNECTIONS_COUNT}
+            MIN_CONNECTIONS_COUNT: ${MIN_CONNECTIONS_COUNT}
+            VERSION: ${VERSION}
+            MUSIC: ${MUSIC_}
+            VIDEO: ${VIDEO_}
+            API_PREFIX: ${API_PREFIX_NAS}
+
+    # transducer:
+    #     image: python_transducer:${VERSION}
+    #     container_name: av_transducer
+    #     build:
+    #         context: .
+    #         dockerfile: ./transducer/Dockerfile
+    #         network: "host"
+    #     volumes:
+    #         - ./transducer/src:/src
+    #         - ./logs/nas:/logs:rw
+    #     depends_on:
+    #         - gateway
+    #     environment:
+    #         DB_USER: ${DB_USER_TR}
+    #         DB_PASSWORD: ${DB_PASSWORD_TR}
+    #         DB_HOST: ${DB_HOST_TR}
+    #         DB_PORT: ${DB_PORT_TR}
+    #         DB_NAME: ${DB_NAME_TR}
+    #         PROJECT_NAME: ${PROJECT_NAME}
+    #         MAX_CONNECTIONS_COUNT: ${MAX_CONNECTIONS_COUNT}
+    #         MIN_CONNECTIONS_COUNT: ${MIN_CONNECTIONS_COUNT}
+    #         VERSION: ${VERSION}
+    #         API_PREFIX: ${API_PREFIX_TR}
