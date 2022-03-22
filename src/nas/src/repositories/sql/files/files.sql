@@ -23,3 +23,21 @@ FROM (
 
 -- name: reset!
 TRUNCATE TABLE files;
+
+
+
+SELECT
+   json_agg(j) as d
+FROM (
+    SELECT
+        json_build_object(
+           'path', path,
+           'filename', filename,
+           'extension', extension
+        ) as j
+    FROM files
+    where extension in (select name from extensions)
+    GROUP BY id
+    order by char_length(path)
+    LIMIT 1000
+) AS r;

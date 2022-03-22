@@ -27,3 +27,4 @@ class FileRepository(BaseRepository):
 
     async def delete(self) -> None:
         await queries.files.reset(self.connection)
+# test

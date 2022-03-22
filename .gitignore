@@ -285,3 +285,4 @@ docs/
 .atom/
 .dockerignore
 .env
+logs/

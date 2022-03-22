@@ -12,6 +12,9 @@ from starlette.status import (
 from loguru import logger
 import orjson
 
+import aiofiles
+import pickle
+
 from ..repositories.files import FileRepository
 from ..models.nas import FileEntry
 from ..dependencies import get_repository
@@ -21,6 +24,22 @@ from ..utils import lsfiles, timer, introspector
 
 
 router = APIRouter(tags=["files"], prefix="/files")
+
+
+async def cache_get():
+    try:
+        async with aiofiles.open('./cache.pckl', mode='rb') as f:
+            return await pickle.load(f)
+    except Exception:
+        return None
+
+
+async def cache_set(data):
+    try:
+        async with aiofiles.open('./cache.pckl', mode='wb') as f:
+            await pickle.dump(data, f)
+    except Exception:
+        return None
 
 
 @logger.catch
@@ -34,8 +53,16 @@ async def get_list(
     *,
     file_repo: FileRepository = Depends(get_repository(FileRepository))
 ) -> Response:
+    res = await cache_get()
+    if res is not None:
+        return Response(
+            status_code=HTTP_200_OK,
+            media_type='application/json',
+            content=res
+        )
     try:
         res = await file_repo.get()
+        await cache_set(res)
         return Response(
             status_code=HTTP_200_OK,
             media_type='application/json',
@@ -59,6 +86,7 @@ async def reindex(
     *,
     file_repo: FileRepository = Depends(get_repository(FileRepository))
 ) -> None:
+    # bloquant
     files_list: List[Any] = lsfiles.lsfiles(fnc=lsfiles.filter_none)("/shared")
     if not files_list:
         raise HTTPException(
@@ -71,6 +99,14 @@ async def reindex(
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail='Exception occured while updating database'
+        )
+    try:
+        res = await file_repo.get()
+        await cache_set(res)
+    except EntityDoesNotExist:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=strings.FILES_ERROR01
         )
 
 
