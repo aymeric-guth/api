@@ -286,3 +286,4 @@ docs/
 .dockerignore
 .env
 logs/
+tests/
