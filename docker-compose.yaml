@@ -4,6 +4,7 @@ services:
 
     db:
         image: postgres:14.0-alpine@sha256:1cf551de75fd602ebc94ccda93305a4e411f941bf9465f59d850bdcfd474ca52
+        restart: always
         container_name: ${SERVICE_DB}
         volumes:
             - /srv/postgres/api:/var/lib/postgresql/data:rw
@@ -41,6 +42,7 @@ services:
 
     gateway:
         image: python_gateway:${VERSION}
+        restart: always
         container_name: ${SERVICE_GATEWAY}
         build:
             context: ./src/gateway/.
@@ -73,6 +75,7 @@ services:
 
     nas:
         image: python_nas:${VERSION}
+        restart: always
         container_name: ${SERVICE_NAS}
         build:
             context: ./src/nas/.
