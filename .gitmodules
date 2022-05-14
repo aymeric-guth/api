@@ -1,0 +1,3 @@
+[submodule "src/nas/src/utils/lsfiles"]
+	path = src/nas/src/utils/lsfiles
+	url = ssh://git@git.ars-virtualis.org/yul/lsfiles.git

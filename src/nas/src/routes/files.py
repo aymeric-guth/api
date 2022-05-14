@@ -87,14 +87,18 @@ async def reindex(
     file_repo: FileRepository = Depends(get_repository(FileRepository))
 ) -> None:
     # bloquant
-    files_list: List[Any] = lsfiles.lsfiles(fnc=lsfiles.filter_none)("/shared")
-    if not files_list:
+    files: list[lsfiles.PathGeneric] = lsfiles.iterativeDFS(
+        lambda f: f,
+        lsfiles.adapters.triplet,
+        "/shared"
+    )
+    if not files:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=strings.FILES_ERROR01
         )
     try:
-        await file_repo.set(files_list=files_list)
+        await file_repo.set(files_list=files)
     except Exception as err:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
