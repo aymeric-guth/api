@@ -1,16 +1,21 @@
+import asyncio
+import pathlib
 from typing import List, Callable, Any
 
 # from asyncpg import Record
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import StreamingResponse
 from starlette.status import (
     HTTP_404_NOT_FOUND,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_200_OK,
     HTTP_204_NO_CONTENT
 )
+from starlette.concurrency import run_in_threadpool
+
 
 from loguru import logger
-import orjson
+import av
 
 import aiofiles
 import pickle
@@ -77,7 +82,7 @@ async def get_list(
 
 @logger.catch
 @router.patch(
-    "",
+    '',
     status_code=HTTP_200_OK,
     # response_model=None,
     name="files:reindex"
@@ -86,11 +91,12 @@ async def reindex(
     *,
     file_repo: FileRepository = Depends(get_repository(FileRepository))
 ) -> None:
-    # bloquant
-    files: list[lsfiles.PathGeneric] = lsfiles.iterativeDFS(
-        lambda f: f,
-        lsfiles.adapters.triplet,
-        "/shared"
+    files: list[lsfiles.PathGeneric] = await run_in_threadpool(
+        lambda: lsfiles.iterativeDFS(
+            lsfiles.filters.dotfiles,
+            lsfiles.adapters.triplet,
+            "/shared"
+        )
     )
     if not files:
         raise HTTPException(
@@ -132,3 +138,57 @@ async def delete(
             status_code=HTTP_404_NOT_FOUND,
             detail=strings.FILES_ERROR01
         )
+
+
+def datagen(path: pathlib.Path):
+    def inner():
+        nonlocal path
+
+        input_ = av.open(str(path))
+        in_stream = input_.streams.audio[0]
+
+        for packet in input_.demux(in_stream):
+            # We need to skip the "flushing" packets that `demux` generates.
+            if packet.dts is None:
+                continue
+            data = bytes(packet)
+            yield data
+    return inner
+
+
+def _datagen(path):
+    input_ = av.open(str(path))
+    in_stream = input_.streams.audio[0]
+
+    for packet in input_.demux(in_stream):
+        # We need to skip the "flushing" packets that `demux` generates.
+        if packet.dts is None:
+            continue
+        data = bytes(packet)
+        yield data
+
+
+@logger.catch
+@router.post(
+    '',
+    status_code=HTTP_200_OK,
+    # response_model=StreamingResponse,
+    name="files:get"
+)
+async def get_file(
+    *,
+    file: FileEntry,
+    file_repo: FileRepository = Depends(get_repository(FileRepository))
+) -> StreamingResponse:
+    try:
+        res = await file_repo.get_one(file=file)
+    except EntityDoesNotExist as err:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='File does not exist'
+        )
+    gen = _datagen(pathlib.Path(f'{res.path}{res.filename}{res.extension}'))
+    return StreamingResponse(
+        gen,
+        media_type='audio/opus'
+    )

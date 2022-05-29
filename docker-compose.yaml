@@ -52,7 +52,7 @@ services:
             - ./src/gateway/src:/src
             - ./logs/gateway:/logs:rw
         ports:
-            - 192.168.1.200:8080:8080
+            - 192.168.1.200:8000:8080
         depends_on:
             - init
         environment:
@@ -105,5 +105,15 @@ services:
             MUSIC: ${MUSIC_}
             VIDEO: ${VIDEO_}
             API_PREFIX: ${API_PREFIX_NAS}
+
+    # actors:
+    #     image: actors_gateway:${VERSION}
+    #     restart: always
+    #     container_name: actors_gateway
+    #     build:
+    #         context: ./src/actors/.
+    #         network: "host"
+    #     depends_on:
+    #         - init
 
 #securityscan-grype:

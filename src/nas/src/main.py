@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.middleware import cors, gzip
 from loguru import logger
+import httpx
 
 from .errors import http_error_handler, http422_error_handler
 from .routes import router as api_router
@@ -43,6 +44,7 @@ async def start_app() -> None:
         max_size=MAX_CONNECTIONS_COUNT,
     )
     logger.info("Connection established")
+    # app.state.client = httpx.AsyncClient()
 
 
 @logger.catch

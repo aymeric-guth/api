@@ -41,3 +41,10 @@ FROM (
     order by char_length(path)
     LIMIT 1000
 ) AS r;
+
+
+-- name: get-one
+SELECT *
+FROM files
+WHERE filename = :filename AND extension = :extension AND path = :path
+LIMIT 1;

@@ -27,4 +27,20 @@ class FileRepository(BaseRepository):
 
     async def delete(self) -> None:
         await queries.files.reset(self.connection)
+
+    async def get_one(self, file: FileEntry) -> FileEntry:
+        res = await queries.files.get_one(
+            self.connection,
+            filename=file.filename,
+            path=file.path,
+            extension=file.extension
+        )
+        if not res:
+            raise EntityDoesNotExist
+        return FileEntry(
+            path=res[0].get('path'),
+            filename=res[0].get('filename'),
+            extension=res[0].get('extension')
+        )
+
 # test
