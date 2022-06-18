@@ -7,5 +7,5 @@ COPY ./requirements.txt /src/requirements.txt
 RUN pip3 install -r /src/requirements.txt
 
 
-# CMD ["hypercorn", "src.main:app", "--bind", "av_gateway:8080", "--reload"]
-CMD ["uvicorn", "src.main:app", "--host", "av_gateway", "--port", "8080", "--reload"]
+#CMD ["uvicorn", "src.main:app", "--host", "av_gateway", "--port", "8080", "--reload"]
+CMD ["uvicorn", "src.main:app", "--host", "av_gateway", "--port", "8080"]
