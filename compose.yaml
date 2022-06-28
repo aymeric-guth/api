@@ -8,8 +8,6 @@ services:
         container_name: ${SERVICE_DB}
         volumes:
             - /srv/postgres/api:/var/lib/postgresql/data:rw
-            - ./logs/db/:/logs:rw
-            # - ./pgdata:/var/lib/postgresql/data:rw
         ports:
             - 192.168.1.200:5433:5432
         environment:
@@ -19,8 +17,7 @@ services:
         image: python_init:${VERSION}
         container_name: ${SERVICE_INIT}
         build:
-            context: ./src/init/.
-            network: "host"
+            context: ./init
         depends_on:
             - db
         environment:
@@ -34,23 +31,15 @@ services:
             DB_HOST_NAS: ${DB_HOST_NAS}
             DB_PORT_NAS: ${DB_PORT_NAS}
             DB_NAME_NAS: ${DB_NAME_NAS}
-            DB_USER_TR: ${DB_USER_TR}
-            DB_PASSWORD_TR: ${DB_PASSWORD_TR}
-            DB_HOST_TR: ${DB_HOST_TR}
-            DB_PORT_TR: ${DB_PORT_TR}
-            DB_NAME_TR: ${DB_NAME_TR}
 
     gateway:
         image: python_gateway:${VERSION}
         restart: always
         container_name: ${SERVICE_GATEWAY}
         build:
-            context: ./src/gateway/.
-            # dockerfile: ./src/gateway/Dockerfile
-            network: "host"
+            context: ./gateway
         volumes:
-            - ./src/gateway/src:/src
-            - ./logs/gateway:/logs:rw
+            - ./gateway/src:/src
         ports:
             - 192.168.1.200:8000:8080
         depends_on:
@@ -78,12 +67,9 @@ services:
         restart: always
         container_name: ${SERVICE_NAS}
         build:
-            context: ./src/nas/.
-            # dockerfile: ./nas/Dockerfile
-            network: "host"
+            context: ./nas
         volumes:
-            - ./src/nas/src:/src
-            - ./logs/nas:/logs:rw
+            - ./nas/src:/src
             - ${MUSIC}:/shared/Audio:ro
             - ${VIDEO}:/shared/Video:ro
         depends_on:
@@ -105,15 +91,3 @@ services:
             MUSIC: ${MUSIC_}
             VIDEO: ${VIDEO_}
             API_PREFIX: ${API_PREFIX_NAS}
-
-    # actors:
-    #     image: actors_gateway:${VERSION}
-    #     restart: always
-    #     container_name: actors_gateway
-    #     build:
-    #         context: ./src/actors/.
-    #         network: "host"
-    #     depends_on:
-    #         - init
-
-#securityscan-grype:
