@@ -39,3 +39,12 @@ LOGIN_ERROR04 = "User with this email already exists"
 LOGIN_ERROR05 = "User with this username already exists"
 
 FILES_ERROR01 = "No files"
+FILES_ERROR02 = "File does not exist"
+FILES_ERROR03 = "File does not exist on disk"
+FILES_ERROR04 = "Can't process directory"
+FILES_ERROR05 = "Unexpected IO error"
+
+FILES_ERROR06 = "Directory does not exist"
+FILES_ERROR07 = "Directory does not exist on disk"
+FILES_ERROR08 = "Can't process file"
+FILES_ERROR09 = "Directory contains directories"

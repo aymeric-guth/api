@@ -43,4 +43,26 @@ class FileRepository(BaseRepository):
             extension=res[0].get('extension')
         )
 
-# test
+    async def get_dir(self, file: FileEntry) -> None:
+        res = await queries.files.get_dir(
+            self.connection,
+            path=file.path,
+        )
+        if not res:
+            raise EntityDoesNotExist
+
+    async def delete_one(self, file: FileEntry) -> None:
+        return await queries.files.delete_one(
+            self.connection,
+            filename=file.filename,
+            path=file.path,
+            extension=file.extension
+        )
+
+    async def delete_path(self, file: FileEntry) -> None:
+        return await queries.files.delete_path(
+            self.connection,
+            filename=file.filename,
+            path=file.path,
+            extension=file.extension
+        )

@@ -43,8 +43,25 @@ FROM (
 ) AS r;
 
 
--- name: get-one
+-- name: get-one^
 SELECT *
 FROM files
 WHERE filename = :filename AND extension = :extension AND path = :path
 LIMIT 1;
+
+-- name: get-dir^
+SELECT *
+FROM files
+WHERE path = :path
+LIMIT 1;
+
+-- name: delete-one!
+DELETE 
+FROM files
+WHERE filename = :filename AND extension = :extension AND path = :path;
+
+
+-- name: delete-path!
+DELETE 
+FROM files
+WHERE path = :path;

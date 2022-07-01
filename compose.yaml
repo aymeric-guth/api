@@ -70,7 +70,7 @@ services:
             context: ./nas
         volumes:
             - ./nas/src:/src
-            - ${MUSIC}:/shared/Audio:ro
+            - ${MUSIC}:/shared/Audio:rw
             - ${VIDEO}:/shared/Video:ro
         depends_on:
             - gateway

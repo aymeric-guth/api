@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from starlette.status import (
     HTTP_404_NOT_FOUND,
+    HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_200_OK,
     HTTP_204_NO_CONTENT
@@ -25,7 +26,7 @@ from ..models.nas import FileEntry
 from ..dependencies import get_repository
 from ..errors import EntityDoesNotExist
 from .. import strings
-from ..utils import lsfiles, timer, introspector
+from ..services import FileService, FileServiceError
 
 
 router = APIRouter(tags=["files"], prefix="/files")
@@ -89,19 +90,15 @@ async def get_list(
 )
 async def reindex(
     *,
-    file_repo: FileRepository = Depends(get_repository(FileRepository))
+    file_repo: FileRepository = Depends(get_repository(FileRepository)),
+    file_service: FileService = Depends(FileService)
 ) -> None:
-    files: list[lsfiles.PathGeneric] = await run_in_threadpool(
-        lambda: lsfiles.iterativeDFS(
-            lsfiles.filters.dotfiles,
-            lsfiles.adapters.triplet,
-            "/shared"
-        )
-    )
-    if not files:
+    try:
+        files = await file_service.files_on_disk()
+    except FileServiceError as err:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=strings.FILES_ERROR01
+            detail=str(err)
         )
     try:
         await file_repo.set(files_list=files)
@@ -112,12 +109,13 @@ async def reindex(
         )
     try:
         res = await file_repo.get()
-        await cache_set(res)
     except EntityDoesNotExist:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail=strings.FILES_ERROR01
         )
+    else:
+        await cache_set(res)
 
 
 @logger.catch
