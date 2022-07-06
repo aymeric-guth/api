@@ -59,6 +59,7 @@ async def delete_file(
             detail=str(err)
         )
     await file_repo.delete_one(file=file)
+    await file_service.cache_invalidate()
 
 
 @logger.catch

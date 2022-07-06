@@ -1,11 +1,15 @@
+from typing import Optional
 import aiofiles
 import aiofiles.ospath
 import aiofiles.os
 import lsfiles
 import os
 import shutil
+import pickle
 
 from starlette.concurrency import run_in_threadpool
+from loguru import logger
+
 
 from ...models.nas import FileEntry
 from ... import strings
@@ -55,3 +59,22 @@ class FileService:
         if not files:
             raise FileServiceError(strings.FILES_ERROR01)
         return files
+
+    async def cache_get(self) -> Optional[str]:
+        try:
+            async with aiofiles.open('./cache.pckl', mode='r') as f:
+                return await f.read()
+        except Exception:
+            logger.exception('Exception occured while reading cache')
+            return None
+
+    async def cache_set(self, data: str) -> None:
+        try:
+            async with aiofiles.open('./cache.pckl', mode='w') as f:
+                await f.write(data)
+        except Exception:
+            logger.exception('Exception occured while updating cache')
+            return None
+
+    async def cache_invalidate(self) -> None:
+        return await self.cache_set('')

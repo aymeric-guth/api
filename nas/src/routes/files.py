@@ -32,22 +32,6 @@ from ..services import FileService, FileServiceError
 router = APIRouter(tags=["files"], prefix="/files")
 
 
-async def cache_get():
-    try:
-        async with aiofiles.open('./cache.pckl', mode='rb') as f:
-            return await pickle.load(f)
-    except Exception:
-        return None
-
-
-async def cache_set(data):
-    try:
-        async with aiofiles.open('./cache.pckl', mode='wb') as f:
-            await pickle.dump(data, f)
-    except Exception:
-        return None
-
-
 @logger.catch
 @router.get(
     "",
@@ -57,9 +41,10 @@ async def cache_set(data):
 )
 async def get_list(
     *,
-    file_repo: FileRepository = Depends(get_repository(FileRepository))
+    file_repo: FileRepository = Depends(get_repository(FileRepository)),
+    file_service: FileService = Depends(FileService)
 ) -> Response:
-    res = await cache_get()
+    res = await file_service.cache_get()
     if res is not None:
         return Response(
             status_code=HTTP_200_OK,
@@ -68,7 +53,7 @@ async def get_list(
         )
     try:
         res = await file_repo.get()
-        await cache_set(res)
+        await file_service.cache_set(res)
         return Response(
             status_code=HTTP_200_OK,
             media_type='application/json',
@@ -115,7 +100,7 @@ async def reindex(
             detail=strings.FILES_ERROR01
         )
     else:
-        await cache_set(res)
+        await file_service.cache_set(res)
 
 
 @logger.catch
