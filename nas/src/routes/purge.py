@@ -32,7 +32,7 @@ router = APIRouter(tags=["purge"], prefix="/purge")
 
 
 @logger.catch
-@router.delete(
+@router.patch(
     "/file",
     status_code=HTTP_200_OK,
     response_model=None,
@@ -44,6 +44,7 @@ async def delete_file(
     file_repo: FileRepository = Depends(get_repository(FileRepository)),
     file_service: FileService = Depends(FileService)
 ) -> None:
+    logger.error(f"Deleting file: {file}")
     try:
         await file_repo.get_one(file=file)
     except EntityDoesNotExist:
@@ -63,7 +64,7 @@ async def delete_file(
 
 
 @logger.catch
-@router.delete(
+@router.patch(
     "/dir",
     status_code=HTTP_200_OK,
     response_model=None,
