@@ -12,4 +12,5 @@ httpx>=0.20.0
 orjson>=3.6.4
 aiofiles>=0.8.0
 av>=9.2.0
+git+https://git.ars-virtualis.org/yul/utils@master
 git+https://git.ars-virtualis.org/yul/lsfiles@master
